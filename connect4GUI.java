@@ -49,7 +49,7 @@ public class connect4GUI extends Application {
         //Start Screen
         startScene=new Scene(startPane, 600,600);
         startPane.setStyle("-fx-background-color: #0000FF");//#797D7F
-        startPane.setPadding(new Insets(10,10,10,10));
+        startPane.setPadding(new Insets(30,30,30,30));
         Label nameLabel= new Label();
         TextField nameTF= new TextField();
 
@@ -70,9 +70,10 @@ public class connect4GUI extends Application {
         startBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event){
-                CBInput=firstPlayerCB.getAccessibleText();
+                CBInput=firstPlayerCB.getValue().toString();
+                System.out.println(CBInput);
                 if (CBInput==("Player")){isUserTurn=true;}
-                //else isUserTurn=false;
+                else isUserTurn=false;
                 if(!isUserTurn){
                     aiValue = 1;
                     userValue = 2;
@@ -82,6 +83,11 @@ public class connect4GUI extends Application {
                             aiTurn()
                     );
 
+                }
+                if(isUserTurn){
+                    userValue = 1;
+                    aiValue = 2;
+                    isUserTurn = true;
                 }
                 mainScene=new Scene(root,720,680);
                 root.setStyle("-fx-background-color: #0000FF");//#797D7F
@@ -141,40 +147,12 @@ public class connect4GUI extends Application {
         primaryStage.show();
 
 
-
-
-
-        aiFirstButton.setOnAction((ActionEvent e) -> {
-            if(!isUserTurn){
-                aiValue = 1;
-                userValue = 2;
-                pause = new PauseTransition(Duration.millis(1000));
-                pause.play();
-                pause.setOnFinished(event ->
-                        aiTurn()
-                );
-
-            }
-        });
-        userFirstButton.setOnAction((ActionEvent e) -> {
-            if(!isUserTurn){   //This is not robust!!!! relies on a new scene
-                userValue = 1;
-                aiValue = 2;
-                isUserTurn = true;
-            }
-        });
         resetButton.setOnAction((ActionEvent e) -> {
             //broken
             board = new short[7][6];
             chipPane.getChildren().removeAll(chipPane.getChildren());
         });
-
-
-
-
-
     }
-
 
     public static void takeUserInput(int command){
         short nextSpot;
@@ -287,10 +265,28 @@ public class connect4GUI extends Application {
 
 
         if(checkWin(column, row, board)){
-            if(isUserTurn)System.out.println("User won!");
-            else System.out.println("AI won");
-            //save game
-        }else if(gameCount >= 42){
+            Stage victoryStage=new Stage();
+            //Text victoryText=new Text();
+            TextField victoryText=new TextField();
+            if(isUserTurn){
+                victoryText.setText("User has won!"); //need to keep track of which turn and print which person won
+            }
+            else if(!isUserTurn){
+                victoryText.setText("Computer has won!");
+            }
+            victoryText.setEditable(false);
+            Pane victoryPane=new Pane();
+            Scene victoryScene=new Scene(victoryPane);
+            victoryPane.getChildren().addAll(victoryText);
+            victoryStage.setScene(victoryScene);
+            victoryStage.show();
+            PauseTransition p=new PauseTransition(Duration.INDEFINITE);
+            p.play();
+            
+
+
+        }
+        else if(gameCount >= 42){
             System.out.println("Draw");
             //save game
         }
@@ -303,7 +299,9 @@ public class connect4GUI extends Application {
         sum += checkVertical(column, row, temp);
         sum += checkForwardSlash(column, row, temp);
         sum += checkBackwardSlash(column, row, temp);
-        if(sum > 0) return true;
+        if(sum > 0){
+            return true;
+        }
         else return false;
     }
     public static short checkHorizontal(short column, short row, short[][] temp){

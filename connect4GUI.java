@@ -6,10 +6,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
@@ -18,7 +21,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.input.MouseEvent;
 import javafx.event.EventHandler;
 import javafx.util.Duration;
+
+import java.io.*;
 import java.util.BitSet;
+import java.util.Scanner;
+import java.util.Vector;
 
 public class connect4GUI extends Application {
     public static Pane root = new Pane();
@@ -27,36 +34,70 @@ public class connect4GUI extends Application {
     public static int box=100;
     public static int gameCount;
     public static Button aiFirstButton, userFirstButton, resetButton;
-    public static Text currentTurnText;
-    public static boolean isUserTurn;
+    public static Text currentTurnText, currentPlayer=new Text();
+    public static boolean isUserTurn,playerWon=false;
     public static short [][] board = new short [7][6];
     public static short userValue, aiValue;
     public static final short DATASIZE = 56;
     public static PauseTransition pause;
-    public static GridPane startPane=new GridPane();
+    public static GridPane startPane=new GridPane(), winnerGridPane=new GridPane();
+    public StackPane stackPane1=new StackPane();
     public static String usrName=null;
     public Button startBtn, Quit;
     public Scene mainScene,startScene;
     public ListView winnerList_LV;
     public ChoiceBox firstPlayerCB;
     public String CBInput;
+    public static String playerName;
+    public static File winnersFile=new File("C:\\Users\\awelts\\IdeaProjects\\connect4Gui\\src\\connect4\\winners.txt");;
+    public HBox hbox=new HBox();
+    public static Vector<String> winners=new Vector<>();
+    public ObservableList<String> winnerList_OL;
+
     @Override
     public void start(Stage primaryStage) throws Exception{
-        // ObservableList<String> winnerList_OL=new FXCollections.observableArrayList();
-        // winnerList_LV=new ListView(winnerList_OL);
-        // isUserTurn = false;
+        winnerList_OL=FXCollections.observableArrayList();
+
+        if(!winnersFile.exists()){
+            winnersFile.createNewFile();
+            System.out.println("File created.");
+        }
+        Scanner in=new Scanner(winnersFile);
+        while (in.hasNext()){
+            String temp=in.next();
+            winners.add(temp);
+        }
+        for(int i=0;i<winners.size();i++){
+            winnerList_OL.add(winners.get(i));
+        }
+
+
+        Label winnerLabel=new Label("Winner List: ");
+        winnerGridPane.setConstraints(winnerLabel,0,0);
+        winnerList_LV=new ListView(winnerList_OL);
+        winnerGridPane.setConstraints(winnerList_LV,0,1);
+        winnerGridPane.setVgap(10);
+        winnerGridPane.setHgap(10);
+        winnerGridPane.setPadding(new Insets(10,10,10,100));
 
         //Start Screen
-        startScene=new Scene(startPane, 600,600);
-        startPane.setStyle("-fx-background-color: #0000FF");//#797D7F
-        startPane.setPadding(new Insets(30,30,30,30));
-        Label nameLabel= new Label();
+        hbox.getChildren().addAll(startPane,winnerGridPane);
+        hbox.setStyle("-fx-background-color: #cccccc");//"-fx-background-color: #0000FF"
+
+        startScene=new Scene(stackPane1, 600,600);
+        stackPane1.getChildren().addAll(hbox);
+
+        startPane.setVgap(10);
+        startPane.setHgap(10);
+        Label nameLabel= new Label("Write Your Name Here: ");
         TextField nameTF= new TextField();
+        nameTF.setPromptText("Enter your name..");
 
         startPane.setConstraints(nameLabel, 0,0);
         startPane.setConstraints(nameTF,0,1);
         startBtn=new Button("START");
         startPane.setConstraints(startBtn,0,4);
+        startPane.setPadding(new Insets(10,50,10,10));
 
         Label firstPlayerLabel=new Label("Select who goes first: ");
         startPane.setConstraints(firstPlayerLabel,0,2);
@@ -65,14 +106,15 @@ public class connect4GUI extends Application {
         firstPlayerCB.getSelectionModel().select(1);
 
         startPane.getChildren().addAll(nameLabel,nameTF,firstPlayerLabel,firstPlayerCB,startBtn);
+        winnerGridPane.getChildren().addAll(winnerList_LV,winnerLabel);
 
 
         // Moves to game board scene
         startBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event){
+                playerName=nameTF.getText();
                 CBInput=firstPlayerCB.getValue().toString();
-                System.out.println(CBInput);
                 if (CBInput==("Player")){isUserTurn=true;}
                 else isUserTurn=false;
                 if(!isUserTurn){
@@ -80,8 +122,13 @@ public class connect4GUI extends Application {
                     userValue = 2;
                     pause = new PauseTransition(Duration.millis(1000));
                     pause.play();
-                    pause.setOnFinished(event1 ->
-                            aiTurn()
+                    pause.setOnFinished(event1 -> {
+                        try {
+                            aiTurn();
+                        } catch (Exception e) {
+                            System.out.println(e);
+                        }
+                            }
                     );
 
                 }
@@ -105,6 +152,7 @@ public class connect4GUI extends Application {
                         mouseClickX = mouseEvent.getSceneX();
                         mouseClickY = mouseEvent.getSceneY();
                         System.out.println(mouseClickY);
+                        try{
                         if (mouseClickY < 610) {
                             if (mouseClickX < 15) ;
                             else if (mouseClickX < 110)
@@ -122,6 +170,9 @@ public class connect4GUI extends Application {
                             else if (mouseClickX < 710)
                                 takeUserInput(6);
                         }
+                    }catch (Exception e){
+                            System.out.println(e);
+                        }
                     }
                 });
 
@@ -129,17 +180,13 @@ public class connect4GUI extends Application {
         });
         gameCount = 0;
 
-
-        aiFirstButton = new Button("AI First");
-        aiFirstButton.relocate(20, 630);
-        userFirstButton = new Button("User First");
-        userFirstButton.relocate(120, 630);
-
         resetButton = new Button("RESET");
         resetButton.relocate(220, 630);
         currentTurnText = new Text("Turn: " );
+        currentTurnText.setFill(Color.WHITE);
+        currentPlayer.setFill(Color.WHITE);
         currentTurnText.relocate(320, 630);
-        root.getChildren().addAll( resetButton, currentTurnText);
+        root.getChildren().addAll( resetButton, currentTurnText,currentPlayer);
 
 
 
@@ -155,7 +202,7 @@ public class connect4GUI extends Application {
         });
     }
 
-    public static void takeUserInput(int command){
+    public static void takeUserInput(int command)throws Exception{
         short nextSpot;
         short [][] temp;
         temp = board.clone();
@@ -169,14 +216,19 @@ public class connect4GUI extends Application {
                 isUserTurn = false;
                 pause = new PauseTransition(Duration.millis(1000));
                 pause.play();
-                pause.setOnFinished(event ->
-                        aiTurn()
+                pause.setOnFinished(event -> {
+                            try {
+                                aiTurn();
+                            } catch (Exception e) {
+                                System.out.println(e);
+                            }
+                        }
                 );
 
             }
         }
     }
-    public static void aiTurn(){
+    public static void aiTurn()throws Exception{
         short column, row;
         short [][] temp;
         temp = board.clone();
@@ -261,7 +313,9 @@ public class connect4GUI extends Application {
         return temp;
     }
 
-    public static void updateBoardSituation(short column, short row){
+    public static void updateBoardSituation(short column, short row)throws Exception{
+
+
         connect4.chip temp;
         temp = new connect4.chip(board[column][row]);
         temp.placeChip(column, row);
@@ -269,28 +323,43 @@ public class connect4GUI extends Application {
 
         if(checkWin(column, row, board)){
             Stage victoryStage=new Stage();
-            //Text victoryText=new Text();
-            TextField victoryText=new TextField();
+            Label victoryText=new Label();
+
             if(isUserTurn){
-                victoryText.setText("User has won!"); //need to keep track of which turn and print which person won
+                victoryText.setText(playerName+", you have won!"); //need to keep track of which turn and print which person won
+                winners.add(playerName);
+                //playerWon=true;
             }
             else if(!isUserTurn){
-                victoryText.setText("Computer has won!");
+                victoryText.setText("The Computer has won!");
             }
-            victoryText.setEditable(false);
-            Pane victoryPane=new Pane();
-            Scene victoryScene=new Scene(victoryPane);
-            victoryPane.getChildren().addAll(victoryText);
+            for(int i=0;i<winners.size();i++){
+                //BufferedWriter bw=new BufferedWriter(new FileWriter(winnersFile));  //this wont write it just clears the file
+                //bw.write(winners.get(i));                                         //maybe need to try something else
+            }
+
+            victoryText.setAlignment(Pos.CENTER);
+            Scene victoryScene=new Scene(victoryText,200,200);
+            victoryText.setStyle("-fx-background-color: #cccccc");
             victoryStage.setScene(victoryScene);
             victoryStage.show();
-            PauseTransition p=new PauseTransition(Duration.INDEFINITE);
-            p.play();
 
         }
 
         else if(gameCount >= 42){
             System.out.println("Draw");
             //save game
+        }
+
+        if(!isUserTurn){ // dont get why but it looks and works better this way.. try taking the '!' away and youll see
+            currentPlayer.setText(" Player");
+            currentPlayer.relocate(360,630);
+
+        }
+        else{
+            currentPlayer.setText(" Computer");
+            currentPlayer.relocate(360,630);
+
         }
     }
 
@@ -422,8 +491,12 @@ public class connect4GUI extends Application {
         root.getChildren().add(gameBoardPane);
     }
 
-    public static void main (String[]args) {
+    public static void main (String[]args) throws Exception{
         launch(args);
+        if(playerWon){
+
+        }
+
     }
 }
 

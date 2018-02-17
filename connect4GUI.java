@@ -62,6 +62,7 @@ public class connect4GUI extends Application {
         startPane.setConstraints(firstPlayerLabel,0,2);
         firstPlayerCB=new ChoiceBox(FXCollections.observableArrayList("Computer", "Player"));
         startPane.setConstraints(firstPlayerCB,0,3);
+        firstPlayerCB.getSelectionModel().select(1);
 
         startPane.getChildren().addAll(nameLabel,nameTF,firstPlayerLabel,firstPlayerCB,startBtn);
 
@@ -136,9 +137,9 @@ public class connect4GUI extends Application {
 
         resetButton = new Button("RESET");
         resetButton.relocate(220, 630);
-        currentTurnText = new Text("Turn: ");
+        currentTurnText = new Text("Turn: " );
         currentTurnText.relocate(320, 630);
-        root.getChildren().addAll(aiFirstButton, userFirstButton, resetButton, currentTurnText);
+        root.getChildren().addAll( resetButton, currentTurnText);
 
 
 
@@ -228,6 +229,7 @@ public class connect4GUI extends Application {
         }
         return results;
     }
+
     public static short [][] decodeBoard(BitSet command){
         short [][] temp;
         boolean current;
@@ -258,6 +260,7 @@ public class connect4GUI extends Application {
         }
         return temp;
     }
+
     public static void updateBoardSituation(short column, short row){
         connect4.chip temp;
         temp = new connect4.chip(board[column][row]);
@@ -282,15 +285,15 @@ public class connect4GUI extends Application {
             victoryStage.show();
             PauseTransition p=new PauseTransition(Duration.INDEFINITE);
             p.play();
-            
-
 
         }
+
         else if(gameCount >= 42){
             System.out.println("Draw");
             //save game
         }
     }
+
     public static boolean checkWin(short column, short row, short [][] temp){
         short sum;
         sum = 0;
@@ -304,6 +307,7 @@ public class connect4GUI extends Application {
         }
         else return false;
     }
+
     public static short checkHorizontal(short column, short row, short[][] temp){
         int sum;
         sum = 0;
@@ -323,6 +327,7 @@ public class connect4GUI extends Application {
         if (sum >=3) return 1;
         else return 0;
     }
+
     public static short checkVertical(short column, short row, short temp[][] ){
         int sum;
         sum = 0;
@@ -342,6 +347,7 @@ public class connect4GUI extends Application {
         if (sum >=3) return 1;
         else return 0;
     }
+
     public static short checkForwardSlash(int column, int row, short temp[][] ){
         int sum;
         sum = 0;
@@ -361,6 +367,7 @@ public class connect4GUI extends Application {
         if (sum >=3) return 1;
         else return 0;
     }
+
     public static short checkBackwardSlash(int column, int row, short temp[][] ){
         int sum;
         sum = 0;
@@ -380,6 +387,7 @@ public class connect4GUI extends Application {
         if (sum >=3) return 1;
         else return 0;
     }
+
     public static short findNextSpot( short[] column){
         short results;
         results = -1;
@@ -392,6 +400,7 @@ public class connect4GUI extends Application {
         }
         return results;
     }
+
     public static void makeLines() {
         Line temp;
         Circle temp0, temp1;
@@ -412,6 +421,7 @@ public class connect4GUI extends Application {
         }
         root.getChildren().add(gameBoardPane);
     }
+
     public static void main (String[]args) {
         launch(args);
     }
